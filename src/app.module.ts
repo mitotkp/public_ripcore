@@ -37,6 +37,7 @@ import { EncryptionHelper } from './core/auth/helpers/encryption.helper';
         return {
           ...coreDbConfig,
           password: decryptedPassword,
+          autoLoadEntities: true,
         };
       },
     }),
@@ -58,7 +59,7 @@ export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
       .apply(TenantMiddleware)
-      .exclude('/auth/login', '/health')
+      .exclude('/auth/login', '/health', '/api/health')
       .forRoutes('*');
   }
 }
