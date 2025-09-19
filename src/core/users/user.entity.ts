@@ -47,10 +47,10 @@ export class User {
   @DeleteDateColumn({ type: 'datetime', nullable: true })
   deleted_at: Date;
 
-  @Column({ type: 'varchar', length: 255 })
+  @Column({ type: 'varchar', length: 255, nullable: true })
   externalId: string;
 
-  @Column({ type: 'varchar', length: 255 })
+  @Column({ type: 'varchar', length: 255, nullable: true })
   tenantName: string;
 
   @ManyToMany(() => Role, (role) => role.users, { cascade: true })

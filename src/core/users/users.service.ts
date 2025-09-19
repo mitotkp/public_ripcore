@@ -12,6 +12,7 @@ import { AuditService } from '../audit/audit.service';
 import { Logger } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { PaginationDto } from '../shared/dto/pagination.dto';
+import { EncryptionHelper } from '../auth/helpers/encryption.helper';
 
 // interface UserPayload {
 //   userId: number;
@@ -30,6 +31,7 @@ export class UsersService {
     @InjectRepository(User, 'default')
     private usersRepository: Repository<User>,
     private auditService: AuditService,
+    private readonly encryptionHelper: EncryptionHelper,
   ) {}
 
   //Crear usuario de forma externa
@@ -59,14 +61,15 @@ export class UsersService {
   }
 
   //Crea un usuario
-  async create(CreateUserDto: CreateUserDto): Promise<User> {
-    const salt = await bcrypt.genSalt();
-    const hashedPassword = await bcrypt.hash(CreateUserDto.password, salt);
+  async create(createUserDto: CreateUserDto): Promise<User> {
+    const encryptedPassword = this.encryptionHelper.encriptar(
+      createUserDto.password,
+    );
 
     // Aqui se crea una nueva instancia de usuario con la contraseña hasheada
     const newUser = this.usersRepository.create({
       ...CreateUserDto,
-      password: hashedPassword,
+      password: encryptedPassword,
     });
 
     await this.usersRepository.save(newUser);

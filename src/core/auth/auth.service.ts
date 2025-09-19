@@ -5,6 +5,7 @@ import { TenantConnectionManager } from '../tenant/tenant-connection.manager';
 import { UsersService } from '../users/users.service';
 import { EncryptionHelper } from './helpers/encryption.helper';
 import { LoginDto } from './dto/login.dto';
+import { LoginCoreDto } from './dto/login-core.dto';
 
 export interface ExternalDbUser {
   CODUSUARIO: string;
@@ -27,6 +28,30 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly encryptionHelper: EncryptionHelper,
   ) {}
+
+  async loginCore(
+    loginCoreDto: LoginCoreDto,
+  ): Promise<{ accessToken: string }> {
+    const { email, password } = loginCoreDto;
+    const user = await this.usersService.findByEmail(email);
+
+    const encryptedPassword = this.encryptionHelper.encriptar(password);
+
+    if (!user || user.password !== encryptedPassword) {
+      throw new UnauthorizedException('Credenciales incorrectas');
+    }
+
+    const payload = {
+      sub: user.id,
+      name: user.name,
+      tenant: 'coreDatabase',
+      dbName: null,
+      roles: user.roles.map((role) => role.name),
+    };
+
+    const accessToken = this.jwtService.sign(payload);
+    return { accessToken };
+  }
 
   async login(
     loginDto: LoginDto,
