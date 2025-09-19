@@ -1,0 +1,27 @@
+import { Controller, Post, Body, UseGuards, Req } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+import { Request } from 'express';
+import { AuthService, SelectionTokenPayload } from './auth.service';
+import { LoginDto } from './dto/login.dto';
+import { SelectCompanyDto } from './dto/select-company.dto';
+
+@Controller('auth')
+export class AuthController {
+  constructor(private readonly authService: AuthService) {}
+
+  @Post('login')
+  async login(@Body() loginDto: LoginDto) {
+    return this.authService.login(loginDto);
+  }
+
+  @Post('select-company')
+  @UseGuards(AuthGuard('jwt-selection'))
+  async selectCompany(
+    @Req() req: Request,
+    @Body() selectCompanyDto: SelectCompanyDto,
+  ) {
+    const userPayload = req.user as SelectionTokenPayload;
+
+    return this.authService.selectCompany(userPayload, selectCompanyDto.dbName);
+  }
+}

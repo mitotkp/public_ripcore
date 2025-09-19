@@ -1,0 +1,28 @@
+{
+    "coreDatabase": {
+        "name": "default",
+        "type": "TYPE.DEFAULT",
+        "host": "HOST.DEFAULT",
+        "username": "USUARIO.DEFAULT",
+        "password": "PASS.DEFAULT",
+        "database": "DB.DEFAULT"
+    },
+    "tenants": [
+        {
+            "name": "SERVIDOR_A",
+            "server": "SERVIDOR_A",
+            "type": "TYPE_SERVIDOR_A",
+            "port": 1433,
+            "user": "USER_BD_A",
+            "password": "PASS_SERVIDOR_A",
+            "database": "DB_NAME_A",
+            "options": {
+                "encrypt": false, 
+                "trustServerCertificate": true
+            }
+        }
+    ],
+    "jwt":{
+        "secret": "JWT_SECRET"
+    }
+}
