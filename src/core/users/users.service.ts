@@ -68,7 +68,7 @@ export class UsersService {
 
     // Aqui se crea una nueva instancia de usuario con la contraseña hasheada
     const newUser = this.usersRepository.create({
-      ...CreateUserDto,
+      ...createUserDto,
       password: encryptedPassword,
     });
 

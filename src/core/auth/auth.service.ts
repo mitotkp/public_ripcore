@@ -6,6 +6,10 @@ import { UsersService } from '../users/users.service';
 import { EncryptionHelper } from './helpers/encryption.helper';
 import { LoginDto } from './dto/login.dto';
 import { LoginCoreDto } from './dto/login-core.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { MailService } from '../mail/mail.service';
+import * as crypto from 'crypto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 
 export interface ExternalDbUser {
   CODUSUARIO: string;
@@ -27,6 +31,7 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
     private readonly encryptionHelper: EncryptionHelper,
+    private readonly mailService: MailService,
   ) {}
 
   async loginCore(
@@ -117,5 +122,59 @@ export class AuthService {
     const accessToken = this.jwtService.sign(payload);
 
     return { accessToken };
+  }
+
+  async forgotPassword(
+    forgotPasswordDto: ForgotPasswordDto,
+  ): Promise<{ message: string }> {
+    const { email } = forgotPasswordDto;
+
+    const user = await this.usersService.findByEmail(email);
+
+    if (!user) {
+      return {
+        message:
+          'Si existe una cuenta con ese correo, se ha enviado un enlace para reestablecer la contraseña.',
+      };
+    }
+
+    const token = crypto.randomBytes(32).toString('hex');
+
+    user.password_reset_token = crypto
+      .createHash('sha256')
+      .update(token)
+      .digest('hex');
+
+    user.password_reset_expires = new Date(Date.now() + 10 * 60 * 1000);
+
+    await this.usersService.save(user);
+
+    await this.mailService.sendPasswordResetEmail(user, token);
+
+    return {
+      message:
+        'Si existe una cuenta con ese correo, se ha enviado un enlace para restablecer la contraseña.',
+    };
+  }
+
+  async resetPassword(
+    resetPasswordDto: ResetPasswordDto,
+  ): Promise<{ message: string }> {
+    const { token, password } = resetPasswordDto;
+
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+    const user = await this.usersService.findByResetToken(hashedToken);
+
+    if (!user) {
+      throw new UnauthorizedException('El token es inválido o ha expirado.');
+    }
+
+    user.password_reset_token = null;
+    user.password_reset_expires = null;
+
+    await this.usersService.save(user);
+
+    return { message: 'La contraseña ha sido restablecida exitosamente.' };
   }
 }

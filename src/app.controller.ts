@@ -16,7 +16,7 @@ export class AppController {
   healthCheck() {
     return {
       status: 'ok',
-      message: 'API is running successfully',
+      message: 'API is running successfully V1.190925',
       timestamp: new Date().toISOString(),
     };
   }
