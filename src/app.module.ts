@@ -63,6 +63,7 @@ export class AppModule implements NestModule {
         '/auth/login',
         '/health',
         '/auth/select-company',
+        '/auth/register/core',
         '/api/health',
         '/api/auth',
       )
