@@ -9,7 +9,7 @@ import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 //import { JwtStrategy } from './strategies/jwt.strategy';
 import { TenantDbModule } from '../tenant/tenant-db.module';
-import { EncryptionHelper } from './helpers/encryption.helper';
+//import { EncryptionHelper } from './helpers/encryption.helper';
 
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { SelectionTokenStrategy } from './strategies/selection-token.strategy';
@@ -34,7 +34,7 @@ import { SelectionTokenStrategy } from './strategies/selection-token.strategy';
   controllers: [AuthController],
   providers: [
     AuthService,
-    EncryptionHelper,
+    //EncryptionHelper,
     JwtStrategy,
     SelectionTokenStrategy,
   ],

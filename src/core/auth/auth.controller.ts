@@ -22,7 +22,6 @@ export class AuthController {
     const user = await this.userService.create(createUserDto);
 
     const { password, ...result } = user;
-
     return result;
   }
 
