@@ -67,6 +67,7 @@ export class AppModule implements NestModule {
         '/api/health',
         '/api/auth',
         '/auth/forgot-password',
+        '/auth/reset-password',
       )
       .forRoutes('*');
   }

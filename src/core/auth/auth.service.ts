@@ -170,6 +170,8 @@ export class AuthService {
       throw new UnauthorizedException('El token es inválido o ha expirado.');
     }
 
+    user.password = this.encryptionHelper.encriptar(password);
+
     user.password_reset_token = null;
     user.password_reset_expires = null;
 

@@ -13,23 +13,22 @@ export class MailService {
     private settingsService: SettingsService,
   ) {
     this.transporter = nodemailer.createTransport({
-      host: this.configService.get<string>('MAIL_HOST'),
+      host: this.configService.get<string>('mail.host'),
       port: 465,
       secure: true,
       auth: {
-        user: this.configService.get<string>('MAIL_USER'),
-        pass: this.configService.get<string>('MAIL_PASS'),
+        user: this.configService.get<string>('mail.user'),
+        pass: this.configService.get<string>('mail.pass'),
       },
     });
   }
 
   async sendWelcomeEmail(user: User) {
-    // USA EL SERVICIO PARA OBTENER EL VALOR DE LA BD
     const appNameSetting = await this.settingsService.findOne('app_name');
 
     await this.transporter.sendMail({
       to: user.email,
-      subject: `Bienvenido a ${appNameSetting.value}`, // <-- ÚSALO AQUÍ
+      subject: `Bienvenido a ${appNameSetting.value}`,
       html: `<h1>Gracias por registrarte en ${appNameSetting.value}</h1>`,
     });
   }
@@ -38,7 +37,7 @@ export class MailService {
     const resetLink = `http://localhost:7575/auth/reset-password?token=${token}`;
 
     await this.transporter.sendMail({
-      from: this.configService.get<string>('MAIL_FROM'),
+      from: this.configService.get<string>('mail.from'),
       to: user.email,
       subject: 'Recuperación de contraseña para RipCore',
       html: `
