@@ -13,10 +13,6 @@ export class TenantMiddleware implements NestMiddleware {
   async use(req: Request, res: Response, next: NextFunction) {
     const tenantName = req.headers['x-tenant-id'] as string;
 
-    if (req.originalUrl.includes('/auth/login')) {
-      return next();
-    }
-
     if (!tenantName) {
       throw new BadRequestException('X-Tenant-ID header is missing.');
     }

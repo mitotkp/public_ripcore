@@ -3,7 +3,8 @@ import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { UsersService } from 'src/core/users/users.service';
-import { RequestUser } from '../interfaces/request-user.interface';
+//import { RequestUser } from '../interfaces/request-user.interface';
+import { User } from 'src/core/users/user.entity';
 
 // Define la estructura del payload del token para tener tipado fuerte
 interface JwtPayload {
@@ -33,8 +34,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: JwtPayload): Promise<RequestUser> {
-    const user = await this.usersService.findOne(payload.sub);
+  async validate(payload: JwtPayload): Promise<User> {
+    const user = await this.usersService.findOneWithRelations(payload.sub);
 
     if (!user) {
       throw new UnauthorizedException(
@@ -42,11 +43,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       );
     }
 
-    return {
-      id: user.id,
-      name: user.name,
-      tenantName: payload.tenant,
-      dbName: payload.dbName,
-    };
+    return user;
   }
 }

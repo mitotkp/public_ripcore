@@ -31,6 +31,10 @@ export class PermissionsGuard implements CanActivate {
 
     // 2. Extrae el usuario y asígnale el tipo correcto
     const { user }: { user: UserPayload } = context.switchToHttp().getRequest();
+    // console.log(
+    //   'Usuario recibido en PermissionsGuard:',
+    //   JSON.stringify(user, null, 2),
+    // );
 
     // 3. Añade una comprobación de seguridad
     if (!user?.roles) {

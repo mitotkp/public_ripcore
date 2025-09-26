@@ -15,7 +15,7 @@ import { CreateSettingDto } from './dto/create-setting.dto';
 
 @Controller('settings')
 @UseGuards(JwtAuthGuard, RolesGuard) // Protegemos todo el controlador
-@Roles('Admin') // Solo los Admins pueden acceder
+@Roles('Admin', 'SuperAdmin', 'Soporte') // Solo los Admins pueden acceder
 export class SettingsController {
   constructor(private readonly settingsService: SettingsService) {}
 

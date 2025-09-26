@@ -13,6 +13,7 @@ import { TenantMiddleware } from './core/tenant/tenant.middleware';
 import { ProfilesModule } from './modules/profiles/profile.module';
 import { configuration } from './config/configuration';
 import { EncryptionHelper } from './core/auth/helpers/encryption.helper';
+import { ProfilesController } from './modules/profiles/profile.controller';
 
 @Module({
   imports: [
@@ -57,18 +58,6 @@ import { EncryptionHelper } from './core/auth/helpers/encryption.helper';
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(TenantMiddleware)
-      .exclude(
-        '/auth/login',
-        '/health',
-        '/auth/select-company',
-        '/auth/register/core',
-        '/api/health',
-        '/api/auth',
-        '/auth/forgot-password',
-        '/auth/reset-password',
-      )
-      .forRoutes('*');
+    consumer.apply(TenantMiddleware).forRoutes(ProfilesController);
   }
 }
