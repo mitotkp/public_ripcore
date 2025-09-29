@@ -7,7 +7,7 @@ import {
   IsIn,
 } from 'class-validator';
 
-export class verifyTenantDto {
+export class VerifyTenantDto {
   @IsString()
   @IsNotEmpty()
   name: string;

@@ -2,8 +2,6 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
-  HttpCode,
-  HttpStatus,
   BadGatewayException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -13,13 +11,8 @@ import { EncryptionHelper } from '../auth/helpers/encryption.helper';
 import * as fs from 'fs';
 import * as path from 'path';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
-//import { Not } from 'typeorm';
-//import { JoinAttribute } from 'typeorm/query-builder/JoinAttribute';
-//import { stringify } from 'querystring';
-import { TenantConnectionManager } from './tenant-connection.manager';
-import { verifyTenantDto } from './dto/verfiy-tenant.dto';
-//import { createConnection } from 'net';
-import { createConnection, getConnectionManager } from 'typeorm';
+import { VerifyTenantDto } from './dto/verfiy-tenant.dto';
+import { createConnection, Connection } from 'typeorm';
 
 @Injectable()
 export class TenantService {
@@ -150,12 +143,13 @@ export class TenantService {
   }
 
   async verifyConnection(
-    verifyTenantDto: verifyTenantDto,
+    verifyTenantDto: VerifyTenantDto,
   ): Promise<{ status: string; message: string }> {
     const tempConnectionName = `verify-${verifyTenantDto.name}-${Date.now()}`;
+    let connection: Connection | undefined;
 
     try {
-      const connection = await createConnection({
+      connection = await createConnection({
         name: tempConnectionName,
         type: verifyTenantDto.type,
         host: verifyTenantDto.server,
@@ -168,17 +162,14 @@ export class TenantService {
         synchronize: false,
       });
 
-      await connection.close();
       return { status: 'ok', message: 'Conexión exitosa.' };
     } catch (error) {
-      console.error('Error de conexión al verificar tenant:', error);
-
-      const connectionManager = getConnectionManager();
-      if (connectionManager.has(tempConnectionName)) {
-        await connectionManager.get(tempConnectionName).close();
-      }
-
+      console.error('Error de conexión al verificar tenant:', error.message);
       throw new BadGatewayException(`Error de conexión: ${error.message}`);
+    } finally {
+      if (connection && connection.isConnected) {
+        await connection.close();
+      }
     }
   }
 }

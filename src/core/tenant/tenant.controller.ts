@@ -16,7 +16,7 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 //import { brotliDecompress } from 'zlib';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
-import { verifyTenantDto } from './dto/verfiy-tenant.dto';
+import { VerifyTenantDto } from './dto/verfiy-tenant.dto';
 
 @Controller('tenants')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -53,7 +53,7 @@ export class TenantController {
 
   @Post('verify-connection')
   @Roles('SuperAdmin', 'Admin', 'Soporte')
-  async verifyConnection(@Body() verifyTenantDto: verifyTenantDto) {
+  async verifyConnection(@Body() verifyTenantDto: VerifyTenantDto) {
     return this.tenantService.verifyConnection(verifyTenantDto);
   }
 }
