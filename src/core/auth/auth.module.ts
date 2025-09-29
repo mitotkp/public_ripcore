@@ -13,6 +13,9 @@ import { TenantDbModule } from '../tenant/tenant-db.module';
 
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { SelectionTokenStrategy } from './strategies/selection-token.strategy';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { BlocklistService } from './blocklist.service';
+import { BlocklistedToken } from './entities/blocklisted-token.entity';
 
 @Module({
   imports: [
@@ -30,6 +33,7 @@ import { SelectionTokenStrategy } from './strategies/selection-token.strategy';
       }),
     }),
     TenantDbModule,
+    TypeOrmModule.forFeature([BlocklistedToken], 'default'),
   ],
   controllers: [AuthController],
   providers: [
@@ -37,6 +41,7 @@ import { SelectionTokenStrategy } from './strategies/selection-token.strategy';
     //EncryptionHelper,
     JwtStrategy,
     SelectionTokenStrategy,
+    BlocklistService,
   ],
   exports: [AuthService],
 })

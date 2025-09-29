@@ -1,4 +1,13 @@
-import { Controller, Post, Body, UseGuards, Req } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  UseGuards,
+  Req,
+  Get,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Request } from 'express';
 import { AuthService, SelectionTokenPayload } from './auth.service';
@@ -10,13 +19,22 @@ import { UsersService } from '../users/users.service';
 import { LoginCoreDto } from './dto/login-core.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { BlocklistService } from './blocklist.service';
 
 @Controller('auth')
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly userService: UsersService,
+    private readonly blocklistService: BlocklistService,
   ) {}
+
+  @Get('me')
+  @UseGuards(JwtAuthGuard)
+  getProfile(@Req() req: Request) {
+    return req.user;
+  }
 
   @Public()
   @Post('register/core')
@@ -48,6 +66,18 @@ export class AuthController {
   @Post('login')
   async login(@Body() loginDto: LoginDto) {
     return this.authService.login(loginDto);
+  }
+
+  @Post('logout')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  async logout(@Req() req: Request) {
+    const autHeader = req.headers['authorization'];
+    if (autHeader && autHeader.startsWith('Bearer ')) {
+      const token = autHeader.substring(7);
+      await this.blocklistService.addToBlocklist(token);
+    }
+    return { message: 'Sesión cerrada correctamente.' };
   }
 
   @Post('select-company')
