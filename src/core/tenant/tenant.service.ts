@@ -4,6 +4,7 @@ import {
   NotFoundException,
   HttpCode,
   HttpStatus,
+  BadGatewayException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Tenant } from './tenant.interface';
@@ -15,6 +16,10 @@ import { UpdateTenantDto } from './dto/update-tenant.dto';
 //import { Not } from 'typeorm';
 //import { JoinAttribute } from 'typeorm/query-builder/JoinAttribute';
 //import { stringify } from 'querystring';
+import { TenantConnectionManager } from './tenant-connection.manager';
+import { verifyTenantDto } from './dto/verfiy-tenant.dto';
+//import { createConnection } from 'net';
+import { createConnection, getConnectionManager } from 'typeorm';
 
 @Injectable()
 export class TenantService {
@@ -23,6 +28,7 @@ export class TenantService {
   constructor(
     private readonly configService: ConfigService,
     private readonly encryptionHelper: EncryptionHelper,
+    //private readonly connectionManager: TenantConnectionManager,
   ) {}
 
   findByName(name: string): Tenant {
@@ -141,5 +147,38 @@ export class TenantService {
     console.warn(
       `ADVERTENCIA: Se ha eliminado el tenant '${name}'. Puede ser necesario reiniciar la aplicación.`,
     );
+  }
+
+  async verifyConnection(
+    verifyTenantDto: verifyTenantDto,
+  ): Promise<{ status: string; message: string }> {
+    const tempConnectionName = `verify-${verifyTenantDto.name}-${Date.now()}`;
+
+    try {
+      const connection = await createConnection({
+        name: tempConnectionName,
+        type: verifyTenantDto.type,
+        host: verifyTenantDto.server,
+        port: verifyTenantDto.port,
+        username: verifyTenantDto.user,
+        password: verifyTenantDto.password,
+        database: verifyTenantDto.database,
+        options: verifyTenantDto.options,
+        entities: [],
+        synchronize: false,
+      });
+
+      await connection.close();
+      return { status: 'ok', message: 'Conexión exitosa.' };
+    } catch (error) {
+      console.error('Error de conexión al verificar tenant:', error);
+
+      const connectionManager = getConnectionManager();
+      if (connectionManager.has(tempConnectionName)) {
+        await connectionManager.get(tempConnectionName).close();
+      }
+
+      throw new BadGatewayException(`Error de conexión: ${error.message}`);
+    }
   }
 }
