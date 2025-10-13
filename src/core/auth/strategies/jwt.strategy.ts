@@ -5,6 +5,7 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { UsersService } from 'src/core/users/users.service';
 //import { RequestUser } from '../interfaces/request-user.interface';
 import { User } from 'src/core/users/user.entity';
+import { BlocklistService } from '../blocklist.service';
 
 // Define la estructura del payload del token para tener tipado fuerte
 interface JwtPayload {
@@ -12,6 +13,7 @@ interface JwtPayload {
   name: string;
   tenant: string;
   dbName: string;
+  jti: string;
 }
 
 @Injectable()
@@ -19,6 +21,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
     private configService: ConfigService,
     private usersService: UsersService,
+    private blocklistService: BlocklistService,
   ) {
     const secret = configService.get<string>('jwt.secret');
 
@@ -35,6 +38,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: JwtPayload): Promise<User> {
+    const isBlocked = await this.blocklistService.isBlocklisted(payload.jti);
+    if (isBlocked) {
+      throw new UnauthorizedException('El token ha sido invalidado.');
+    }
+
     const user = await this.usersService.findOneWithRelations(payload.sub);
 
     if (!user) {

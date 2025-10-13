@@ -10,6 +10,7 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { MailService } from '../mail/mail.service';
 import * as crypto from 'crypto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { v4 as uuidv4 } from 'uuid';
 
 export interface ExternalDbUser {
   CODUSUARIO: string;
@@ -52,6 +53,7 @@ export class AuthService {
       tenant: 'coreDatabase',
       dbName: null,
       roles: user.roles.map((role) => role.name),
+      jti: uuidv4(),
     };
 
     const accessToken = this.jwtService.sign(payload);
@@ -117,6 +119,7 @@ export class AuthService {
       name: coreUser.name,
       tenant: coreUser.tenantName,
       dbName: selectDbName,
+      jti: uuidv4(),
     };
 
     const accessToken = this.jwtService.sign(payload);
