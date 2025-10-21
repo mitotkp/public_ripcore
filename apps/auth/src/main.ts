@@ -1,8 +1,15 @@
 import { NestFactory } from '@nestjs/core';
-import { AuthModule } from './auth/auth.module';
+import { AppModule } from './app.module';
+import { ValidationPipe, ClassSerializerInterceptor } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AuthModule);
-  await app.listen(process.env.port ?? 3000);
+  const app = await NestFactory.create(AppModule);
+
+  app.setGlobalPrefix('api');
+  app.useGlobalPipes(new ValidationPipe());
+  app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
+
+  await app.listen(process.env.PORT_AUTH ?? 3001);
 }
 bootstrap();
