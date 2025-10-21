@@ -1,0 +1,9 @@
+// apps/ripcore/tsconfig.app.json
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../../dist/apps/ripcore"
+  },
+  "include": ["src/**/*"], // Solo incluye src por ahora
+  "exclude": ["node_modules", "dist", "test"] // Excluye test temporalmente
+}
