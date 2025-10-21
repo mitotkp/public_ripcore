@@ -3,12 +3,11 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-
 import { TenantDbModule } from './core/tenant/tenant-db.module';
 import { TenantMiddleware } from './core/tenant/tenant.middleware';
 import { ProfilesModule } from './modules/profiles/profile.module';
 import { configuration } from './config/configuration';
-//import { EncryptionHelper } from './core/auth/helpers/encryption.helper';
+import { EncryptionHelper } from './helpers/encryption.helper';
 import { ProfilesController } from './modules/profiles/profile.controller';
 
 @Module({
@@ -18,28 +17,30 @@ import { ProfilesController } from './modules/profiles/profile.controller';
       isGlobal: true,
       load: [configuration],
     }),
+    TenantDbModule,
     //Conexión a la Base de Datos Principal (Core) de forma asíncrona
     TypeOrmModule.forRootAsync({
       name: 'default',
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) => {
+      imports: [ConfigModule, TenantDbModule],
+      inject: [ConfigService, EncryptionHelper],
+      useFactory: (
+        configService: ConfigService,
+        encryptionHelper: EncryptionHelper,
+      ) => {
         const coreDbConfig = configService.get('coreDatabase');
-        //const encryptionHelper = new EncryptionHelper();
 
-        // const decryptedPassword = encryptionHelper.desEncriptar(
-        //   coreDbConfig.password,
-        // );
+        const decryptedPassword = encryptionHelper.desEncriptar(
+          coreDbConfig.password,
+        );
 
         return {
           ...coreDbConfig,
-          //password: decryptedPassword,
+          password: decryptedPassword,
           autoLoadEntities: true,
         };
       },
     }),
     //Módulos del Core de la aplicación
-    TenantDbModule,
     ProfilesModule,
   ],
   controllers: [AppController],
