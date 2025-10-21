@@ -7,7 +7,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { Tenant } from './tenant.interface';
 import { CreateTenantDto } from './dto/create-tenant.dto';
-//import { EncryptionHelper } from '../auth/helpers/encryption.helper';
+import { EncryptionHelper } from '../../helpers/encryption.helper';
 import * as fs from 'fs';
 import * as path from 'path';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
@@ -20,7 +20,7 @@ export class TenantService {
 
   constructor(
     private readonly configService: ConfigService,
-    //private readonly encryptionHelper: EncryptionHelper,
+    private readonly encryptionHelper: EncryptionHelper,
     //private readonly connectionManager: TenantConnectionManager,
   ) {}
 
@@ -68,7 +68,7 @@ export class TenantService {
 
     const newTenant = {
       ...CreateTenantDto,
-      //password: this.encryptionHelper.encriptar(CreateTenantDto.password),
+      password: this.encryptionHelper.encriptar(CreateTenantDto.password),
     };
 
     config.tenants.push(newTenant);
@@ -99,11 +99,11 @@ export class TenantService {
       );
     }
 
-    // if (UpdateTenantDto.password) {
-    //   UpdateTenantDto.password = this.encryptionHelper.encriptar(
-    //     UpdateTenantDto.password,
-    //   );
-    // }
+    if (UpdateTenantDto.password) {
+      UpdateTenantDto.password = this.encryptionHelper.encriptar(
+        UpdateTenantDto.password,
+      );
+    }
 
     const updatedTenant = { ...tenants[tenantIndex], ...UpdateTenantDto };
     config.tenants[tenantIndex] = updatedTenant;

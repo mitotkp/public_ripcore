@@ -1,10 +1,11 @@
 import { Injectable, Scope } from '@nestjs/common';
 import { createConnection, Connection, getConnectionManager } from 'typeorm';
 import { Tenant } from './tenant.interface';
+import { EncryptionHelper } from '../../helpers/encryption.helper';
 
 @Injectable({ scope: Scope.REQUEST })
 export class TenantConnectionManager {
-  constructor() {}
+  constructor(private readonly encryptionHelper: EncryptionHelper) {}
 
   async getConnection(tenant: Tenant, dbName?: string): Promise<Connection> {
     const connectionManager = getConnectionManager();
@@ -16,15 +17,18 @@ export class TenantConnectionManager {
       return connection.isConnected ? connection : await connection.connect();
     }
 
+    const decryptedPassword = this.encryptionHelper.desEncriptar(
+      tenant.password,
+    );
+
     return await createConnection({
       name: connectionName,
       type: tenant.type,
       host: tenant.server,
       port: tenant.port,
       username: tenant.user,
-      password: tenant.password,
+      password: decryptedPassword,
       database: targetDatabase,
-      // Ajusta la ruta de entidades para que funcione desde la nueva ubicación
       entities: [__dirname + '/../../**/*.entity{.ts,.js}'],
       synchronize: false,
       options: tenant.options,
