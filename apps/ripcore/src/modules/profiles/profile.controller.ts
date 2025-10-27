@@ -27,6 +27,7 @@ export class ProfilesController {
 
   @Get('me')
   findOne(@Request() req: RequestWithUser) {
+    //const fakeUserID = 1;
     return this.profilesService.findOneByUser(req.user.userId);
   }
 
