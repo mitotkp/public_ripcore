@@ -11,7 +11,7 @@ export class AppModule implements NestModule {
     consumer
       .apply(
         createProxyMiddleware({
-          target: 'http://localhost:3011',
+          target: 'http://localhost:3001',
           changeOrigin: true,
         }),
       )
@@ -20,7 +20,7 @@ export class AppModule implements NestModule {
     consumer
       .apply(
         createProxyMiddleware({
-          target: 'http://localhost:3011',
+          target: 'http://localhost:3001',
           changeOrigin: true,
         }),
       )
@@ -29,7 +29,7 @@ export class AppModule implements NestModule {
     consumer
       .apply(
         createProxyMiddleware({
-          target: 'http://localhost:3011',
+          target: 'http://localhost:3001',
           changeOrigin: true,
         }),
       )
@@ -38,11 +38,20 @@ export class AppModule implements NestModule {
     consumer
       .apply(
         createProxyMiddleware({
-          target: 'http://localhost:3011',
+          target: 'http://localhost:3001',
           changeOrigin: true,
         }),
       )
       .forRoutes('api/audit-logs');
+
+    consumer
+      .apply(
+        createProxyMiddleware({
+          target: 'http://localhost:3001',
+          changeOrigin: true,
+        }),
+      )
+      .forRoutes('api/auth');
 
     consumer
       .apply(
