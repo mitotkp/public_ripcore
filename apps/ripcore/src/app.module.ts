@@ -48,6 +48,6 @@ import { ProfilesController } from './modules/profiles/profile.controller';
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(TenantMiddleware).forRoutes(ProfilesController);
+    //consumer.apply(TenantMiddleware).forRoutes(ProfilesController);
   }
 }
