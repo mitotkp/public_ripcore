@@ -116,8 +116,18 @@ export class AuthGatewayController {
   async proxyToAdminModules(@Req() req: Request) {
     const { method, originalUrl, body, headers } = req;
 
-    const token = headers['authorization'].split(' ')[1];
-    const tokenPayload = this.jwtService.decode(token) as any;
+    const authHeader = headers['authorization'];
+    if (!authHeader || typeof authHeader !== 'string') {
+      throw new UnauthorizedException(
+        'Authorization header is missing or invalid',
+      );
+    }
+    const token = authHeader.split(' ')[1];
+    if (!token) {
+      throw new UnauthorizedException('Token is missing');
+    }
+
+    const tokenPayload = this.jwtService.decode(token);
 
     delete headers['host'];
     delete headers['content-length'];

@@ -1,4 +1,10 @@
-import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  UnauthorizedException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 //import { Observable } from 'rxjs';
@@ -22,15 +28,34 @@ export class RolesGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const authHeader = request.headers['authorization'];
 
-    if (!authHeader) return false;
+    if (
+      !authHeader ||
+      typeof authHeader !== 'string' ||
+      !authHeader.startsWith('Bearer ')
+    ) {
+      throw new UnauthorizedException(
+        'Authorization header missing or invalid',
+      );
+    }
+
     const token = authHeader.split(' ')[1];
-    if (!token) return false;
+
+    if (!token) {
+      throw new UnauthorizedException('Token is missing');
+    }
 
     try {
       const tokenPayload = this.jwtService.verify(token);
       const userRoles: string[] = tokenPayload.roles || [];
 
-      return requiredRoles.some((role) => userRoles.includes(role));
+      const hasRequieredRole = requiredRoles.some((role) =>
+        userRoles.includes(role),
+      );
+      if (!hasRequieredRole) {
+        return false;
+      }
+
+      return true;
     } catch (error) {
       console.log(error);
       return false;
