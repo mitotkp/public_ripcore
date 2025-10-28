@@ -5,20 +5,23 @@ import {
   Patch,
   //UseGuards,
   Request,
+  Headers,
+  //ParseIntPipe,
+  BadRequestException,
 } from '@nestjs/common';
 import { ProfileService } from './profile.service';
 import { UpdateProfileDto } from './dto/update.profile.dto';
 //import { JwtAuthGuard } from 'src/core/auth/guards/jwt-auth.guard';
-import { Request as ExpressRequest } from 'express';
+//import { Request as ExpressRequest } from 'express';
 
-interface RequestWithUser extends ExpressRequest {
-  user: {
-    userId: number;
-    email: string;
-    name: string;
-    roles: { name: string }[];
-  };
-}
+// interface RequestWithUser extends ExpressRequest {
+//   user: {
+//     userId: number;
+//     email: string;
+//     name: string;
+//     roles: { name: string }[];
+//   };
+// }
 
 @Controller('profiles')
 //@UseGuards(JwtAuthGuard)
@@ -26,16 +29,24 @@ export class ProfilesController {
   constructor(private readonly profilesService: ProfileService) {}
 
   @Get('me')
-  findOne(@Request() req: RequestWithUser) {
-    //const fakeUserID = 1;
-    return this.profilesService.findOneByUser(req.user.userId);
+  findOne(@Headers('X-User-ID') userIdHeader: string) {
+    const userId = parseInt(userIdHeader, 10);
+    if (isNaN(userId)) {
+      throw new BadRequestException('Invalid or missing X-USer-ID header');
+    }
+    return this.profilesService.findOneByUser(userId);
   }
 
   @Patch('me')
   update(
-    @Request() req: RequestWithUser,
+    @Headers('X-User-ID') userIdHeader: string,
     @Body() updateProfileDto: UpdateProfileDto,
   ) {
-    return this.profilesService.update(req.user.userId, updateProfileDto);
+    const userId = parseInt(userIdHeader, 10);
+    if (isNaN(userId)) {
+      throw new BadRequestException('Invalid or missing X-User-ID header');
+    }
+
+    return this.profilesService.update(userId, updateProfileDto);
   }
 }

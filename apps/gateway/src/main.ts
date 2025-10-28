@@ -1,15 +1,8 @@
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
-//import { ClassSerializerInterceptor } from '@nestjs/common';
-//import { Reflector } from '@nestjs/core';
+import { GatewayModule } from './gateway.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-
-  //app.setGlobalPrefix('api');
-  //app.useGlobalPipes(new ValidationPipe());
-  //app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
-
-  await app.listen(process.env.PORT_AUTH ?? 3011);
+  const app = await NestFactory.create(GatewayModule);
+  await app.listen(process.env.port ?? 3011);
 }
 bootstrap();
