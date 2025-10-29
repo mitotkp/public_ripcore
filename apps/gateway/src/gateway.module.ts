@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { GatewayController } from './gateway.controller';
@@ -10,6 +10,11 @@ import { RipcoreGatewayController } from './ripcore.controller';
 import { HttpModule } from '@nestjs/axios';
 import { configuration } from './config/configuration';
 //import { config } from 'process';
+
+import { APP_GUARD } from '@nestjs/core';
+import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
+import { RolesGuard } from './roles.guard';
+import { HttpLoggerMiddleware } from './common/middleware/http-logger.middleware';
 
 @Module({
   imports: [
@@ -37,6 +42,20 @@ import { configuration } from './config/configuration';
     AuthGatewayController,
     RipcoreGatewayController,
   ],
-  providers: [GatewayService],
+  providers: [
+    GatewayService,
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: RolesGuard,
+    },
+  ],
 })
-export class GatewayModule {}
+export class GatewayModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(HttpLoggerMiddleware).forRoutes('*');
+  }
+}
