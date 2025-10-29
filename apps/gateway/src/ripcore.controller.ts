@@ -4,6 +4,8 @@ import {
   All,
   UnauthorizedException,
   BadGatewayException,
+  HttpException,
+  HttpStatus,
 } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { Request } from 'express';
@@ -63,8 +65,12 @@ export class RipcoreGatewayController {
       );
       return response.data;
     } catch (error) {
-      if ((error as AxiosError).response) {
-        return (error as AxiosError).response?.data;
+      const e = error as AxiosError;
+      if (e.response) {
+        throw new HttpException(
+          e.response.data || '',
+          e.response.status || HttpStatus.INTERNAL_SERVER_ERROR,
+        );
       }
       throw new BadGatewayException('Upstream service ripcore is unavailable');
     }

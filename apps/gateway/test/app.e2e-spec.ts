@@ -22,9 +22,9 @@ describe('AuthGatewayController (e2e) - Admin Routes', () => {
   it('debería retornar 401 si no se envía el header Authorization', () => {
     return request(app.getHttpServer())
       .get('/api/rbac/roles') // Usa una ruta protegida
-      .expect(403)
+      .expect(401)
       .expect((res) => {
-        expect(res.body.message).toEqual(
+        expect(res.body.message).toContain(
           'Authorization header is missing or invalid',
         );
       });

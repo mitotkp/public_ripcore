@@ -6,6 +6,8 @@ import {
   UnauthorizedException,
   BadGatewayException,
   UseGuards,
+  HttpException,
+  HttpStatus,
 } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { Request } from 'express';
@@ -50,7 +52,10 @@ export class AuthGatewayController {
     } catch (error) {
       const e = error as AxiosError;
       if (e.response) {
-        return e.response.data;
+        throw new HttpException(
+          e.response.data || '',
+          e.response.status || HttpStatus.INTERNAL_SERVER_ERROR,
+        );
       }
       throw error;
     }
@@ -104,7 +109,10 @@ export class AuthGatewayController {
     } catch (error) {
       const e = error as AxiosError;
       if (e.response) {
-        return e.response?.data;
+        throw new HttpException(
+          e.response.data || '',
+          e.response.status || HttpStatus.INTERNAL_SERVER_ERROR,
+        );
       }
       throw new BadGatewayException('Upstream service auth is unvailable');
     }
@@ -152,7 +160,10 @@ export class AuthGatewayController {
     } catch (error) {
       const e = error as AxiosError;
       if (e.response) {
-        return e.response?.data;
+        throw new HttpException(
+          e.response.data || '',
+          e.response.status || HttpStatus.INTERNAL_SERVER_ERROR,
+        );
       }
       throw new BadGatewayException('Upstream service auth is unavailable');
     }
