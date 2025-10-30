@@ -9,6 +9,8 @@ import { RbacModule } from './rbac/rbac.module';
 import { AuditModule } from './audit/audit.module';
 import { EncryptionHelper } from './auth/helpers/encryption.helper';
 import { SettingsModule } from './settings/settings.module';
+//import { ModuleRegistryService } from './module-registry-service/module-registry-service.service';
+import { ModuleRegistryModule } from './module-registry-service/module-registry.module';
 
 @Module({
   imports: [
@@ -42,6 +44,7 @@ import { SettingsModule } from './settings/settings.module';
     SettingsModule,
     MailModule,
     AuditModule,
+    ModuleRegistryModule,
   ],
   controllers: [],
   providers: [],

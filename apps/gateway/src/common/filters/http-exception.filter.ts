@@ -5,7 +5,6 @@ import {
   HttpException,
   HttpStatus,
   Logger,
-  HttpStatus,
 } from '@nestjs/common';
 import { HttpAdapterHost } from '@nestjs/core';
 
@@ -22,13 +21,37 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const request = ctx.getRequest<Request>();
     const response = ctx.getResponse<Response>();
 
-    const HttpStatus =
+    const httpStatus =
       exception instanceof HttpException
         ? exception.getStatus()
         : HttpStatus.INTERNAL_SERVER_ERROR;
 
     let responseBody: any;
 
-    
+    if (exception instanceof HttpException) {
+      const errorResponse = exception.getResponse();
+      responseBody =
+        typeof errorResponse === 'string'
+          ? { statusCode: httpStatus, message: errorResponse }
+          : { statusCode: httpStatus, ...errorResponse };
+    } else {
+      this.logger.error(
+        `Unhandled Exception: ${request.method} ${request.url}`,
+        exception instanceof Error ? exception.stack : exception,
+        'ExceptionFilter',
+      );
+      responseBody = {
+        statusCode: httpStatus,
+        message: 'Internal server error',
+      };
+    }
+
+    if (typeof responseBody === 'string') {
+      responseBody = { statusCode: httpStatus, message: responseBody };
+    } else if (!responseBody.statusCode) {
+      responseBody.statusCode = httpStatus;
+    }
+
+    httpAdapter.reply(response, responseBody, httpStatus);
   }
 }
