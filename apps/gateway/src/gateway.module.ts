@@ -18,10 +18,14 @@ import { APP_GUARD, APP_FILTER, HttpAdapterHost } from '@nestjs/core';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 
+import { CacheModule } from '@nestjs/cache-manager';
+import { ScheduleModule } from '@nestjs/schedule';
+import { DiscoveryService } from './discovery/discovery.service';
+
 @Module({
   imports: [
     HttpModule.register({
-      timeout: 5000,
+      timeout: 300000,
     }),
 
     ConfigModule.forRoot({
@@ -34,6 +38,8 @@ import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
         limit: 60,
       },
     ]),
+    CacheModule.register({ isGlobal: true }),
+    ScheduleModule.forRoot(),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -52,6 +58,7 @@ import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
   providers: [
     GatewayService,
     Logger,
+    DiscoveryService,
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
