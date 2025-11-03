@@ -8,6 +8,7 @@ import { TenantDbModule } from './core/tenant/tenant-db.module';
 import { ProfilesModule } from './modules/profiles/profile.module';
 import { configuration } from './config/configuration';
 import { EncryptionHelper } from './helpers/encryption.helper';
+import { DiagModule } from './modules/diag/diag.module';
 //import { ProfilesController } from './modules/profiles/profile.controller';
 
 @Module({
@@ -42,6 +43,7 @@ import { EncryptionHelper } from './helpers/encryption.helper';
     }),
     //Módulos del Core de la aplicación
     ProfilesModule,
+    DiagModule,
   ],
   controllers: [AppController],
   providers: [AppService],
