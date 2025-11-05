@@ -21,6 +21,7 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { BlocklistService } from './blocklist.service';
+import { User } from '../users/user.entity';
 
 @Controller('auth')
 export class AuthController {
@@ -89,5 +90,22 @@ export class AuthController {
     const userPayload = req.user as SelectionTokenPayload;
 
     return this.authService.selectCompany(userPayload, selectCompanyDto.dbName);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('my-companies')
+  async getMyCompanies(@Req() req: Request) {
+    const user = req.user as User;
+    return this.authService.getMyCompanies(user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('switch-company')
+  async switchCompany(
+    @Req() req: Request,
+    @Body() selectCompanyDto: SelectCompanyDto,
+  ) {
+    const user = req.user as User;
+    return this.authService.switchCompany(user, selectCompanyDto.dbName);
   }
 }

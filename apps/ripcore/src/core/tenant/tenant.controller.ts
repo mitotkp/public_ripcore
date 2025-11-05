@@ -17,6 +17,7 @@ import { CreateTenantDto } from './dto/create-tenant.dto';
 //import { brotliDecompress } from 'zlib';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
 import { VerifyTenantDto } from './dto/verfiy-tenant.dto';
+//import { Public } from './decorators/public.decorator';
 
 @Controller('tenants')
 //@UseGuards(JwtAuthGuard, RolesGuard)

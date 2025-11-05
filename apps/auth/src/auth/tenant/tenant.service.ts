@@ -43,6 +43,16 @@ export class TenantService {
     return tenant;
   }
 
+  findAllNames(): string[] {
+    const tenants = this.configService.get<Tenant[]>('tenants');
+
+    if (!tenants || tenants.length === 0) {
+      return [];
+    }
+
+    return tenants.map((tenant) => tenant.name);
+  }
+
   findAll(): Omit<Tenant, 'password'>[] {
     const tenants = this.configService.get<Tenant[]>('tenants');
 

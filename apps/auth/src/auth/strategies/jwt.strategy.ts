@@ -18,6 +18,8 @@ interface JwtPayload {
   jti: string;
 }
 
+type UserWithSessionInfo = User & { dbName: string; tenantName: string };
+
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
@@ -39,7 +41,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: JwtPayload): Promise<User> {
+  async validate(payload: JwtPayload): Promise<UserWithSessionInfo> {
     const isBlocked = await this.blocklistService.isBlocklisted(payload.jti);
     if (isBlocked) {
       throw new UnauthorizedException('El token ha sido invalidado.');
@@ -53,6 +55,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       );
     }
 
-    return user;
+    return {
+      ...user,
+      dbName: payload.dbName,
+      tenantName: payload.tenant,
+    };
   }
 }

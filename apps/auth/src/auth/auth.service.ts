@@ -11,6 +11,7 @@ import { MailService } from '../mail/mail.service';
 import * as crypto from 'crypto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { v4 as uuidv4 } from 'uuid';
+import { User } from '../users/user.entity';
 
 export interface ExternalDbUser {
   CODUSUARIO: string;
@@ -98,6 +99,65 @@ export class AuthService {
     );
 
     return { companies, selectionToken };
+  }
+
+  private async _getAvailableCompanies(user: User): Promise<string[]> {
+    if (!user.tenantName || user.tenantName === 'coreDatabase') {
+      return [];
+    }
+
+    const tenant = this.tenantService.findByName(user.tenantName);
+    const tenantConnection = await this.connectionManager.getConnection(tenant);
+
+    const query = `
+      SELECT DISTINCT SUBSTRING(EM.PATHBD, CHARINDEX(':', EM.PATHBD) + 1, LEN(EM.PATHBD)) AS DB 
+      FROM USUARIOS U
+      INNER JOIN EMPRESASUSUARIO EMU ON EMU.CODUSUARIO = U.CODUSUARIO
+      INNER JOIN EMPRESAS EM ON EM.CODEMPRESA = EMU.CODEMPRESA
+      WHERE U.CODUSUARIO = @0`;
+
+    const results: { DB: string }[] = await tenantConnection.query(query, [
+      user.externalId,
+    ]);
+
+    if (!results || results.length === 0) {
+      return [];
+    }
+    return results.map((result) => result.DB);
+  }
+
+  async getMyCompanies(userId: number): Promise<string[]> {
+    const user = await this.usersService.findOne(userId);
+
+    if (!user) {
+      throw new UnauthorizedException('usuario no encontrado');
+    }
+
+    return this._getAvailableCompanies(user);
+  }
+
+  async switchCompany(
+    user: User,
+    newDbName: string,
+  ): Promise<{ accessToken: string }> {
+    const allowedCompanies = await this._getAvailableCompanies(user);
+    if (!allowedCompanies.includes(newDbName)) {
+      throw new UnauthorizedException(
+        `No tienes permiso para acceder a la empresa: ${newDbName}`,
+      );
+    }
+
+    const payload = {
+      sub: user.id,
+      name: user.name,
+      tenant: user.tenantName,
+      dbName: newDbName, // El nuevo dbName
+      roles: user.roles.map((role) => role.name),
+      jti: uuidv4(),
+    };
+
+    const accessToken = this.jwtService.sign(payload);
+    return { accessToken };
   }
 
   async selectCompany(

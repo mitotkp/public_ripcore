@@ -71,6 +71,9 @@ export class AuthGatewayController {
     'api/auth/forgot-password',
     'api/auth/reset-password',
     'api/auth/login',
+    'api/tenants/public-list',
+    'api/auth/my-companies',
+    'api/auth/switch-company',
   ])
   async proxyToAuthService(@Req() req: Request) {
     const { method, originalUrl, body, headers } = req;

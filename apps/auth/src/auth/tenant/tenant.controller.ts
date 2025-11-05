@@ -20,11 +20,18 @@ import { Roles } from '../decorators/roles.decorator';
 //import { brotliDecompress } from 'zlib';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
 import { VerifyTenantDto } from './dto/verfiy-tenant.dto';
+import { Public } from '../decorators/public.decorator';
 
 @Controller('tenants')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class TenantController {
   constructor(private readonly tenantService: TenantService) {}
+
+  @Public()
+  @Get('public-list')
+  findAllPublic() {
+    return this.tenantService.findAllNames();
+  }
 
   @Get()
   @Roles('SuperAdmin', 'Admin', 'Soporte')
