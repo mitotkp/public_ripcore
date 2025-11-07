@@ -13,6 +13,10 @@ export class CreateModuleDto {
   @IsNotEmpty()
   baseUrl: string;
 
+  @IsString()
+  @IsOptional()
+  frontendUrl?: string;
+
   @IsNumber()
   @IsOptional()
   isEnabled?: number;

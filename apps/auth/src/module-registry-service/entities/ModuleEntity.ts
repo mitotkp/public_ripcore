@@ -20,6 +20,9 @@ export class RegistredModule {
   @Column({ type: 'varchar', length: 500, name: 'baseUrl' })
   baseUrl: string;
 
+  @Column({ type: 'varchar', length: 500, name: 'frontendUrl', nullable: true })
+  frontendUrl: string;
+
   @Column({ default: 1, name: 'is_enabled' })
   isEnabled: number;
 
