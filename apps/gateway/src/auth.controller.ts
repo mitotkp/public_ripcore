@@ -111,6 +111,8 @@ export class AuthGatewayController {
     'api/auth/logout',
     'api/auth/select-company',
     'api/users/*',
+    'api/modules/*',
+    'api/auth/my-companies',
   ])
   async proxyToAuthModules(@Req() req: RequestWithUser) {
     const { method, originalUrl, body, headers, user } = req;
@@ -149,7 +151,15 @@ export class AuthGatewayController {
     }
   }
 
-  @All(['api/rbac/*', 'api/tenants/*', 'api/settings/*', 'api/audit-logs/*'])
+  @All([
+    'api/rbac/*',
+    'api/tenants/*',
+    'api/settings/*',
+    'api/audit-logs/*',
+    'api/audit-logs',
+    'api/auth/admin/switch-context',
+    'api/auth/admin/exit-context',
+  ])
   @Roles('Admin', 'SuperAdmin', 'Soporte')
   async proxyToAdminModules(@Req() req: RequestWithUser) {
     const { method, originalUrl, body, headers, user } = req;

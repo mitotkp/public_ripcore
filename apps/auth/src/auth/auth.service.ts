@@ -12,6 +12,7 @@ import * as crypto from 'crypto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { v4 as uuidv4 } from 'uuid';
 import { User } from '../users/user.entity';
+import { NotFoundException } from '@nestjs/common';
 
 export interface ExternalDbUser {
   CODUSUARIO: string;
@@ -48,17 +49,7 @@ export class AuthService {
       throw new UnauthorizedException('Credenciales incorrectas');
     }
 
-    const payload = {
-      sub: user.id,
-      name: user.name,
-      tenant: 'coreDatabase',
-      dbName: null,
-      roles: user.roles.map((role) => role.name),
-      jti: uuidv4(),
-    };
-
-    const accessToken = this.jwtService.sign(payload);
-    return { accessToken };
+    return this._generateCoreToken(user);
   }
 
   async login(
@@ -102,6 +93,7 @@ export class AuthService {
   }
 
   private async _getAvailableCompanies(user: User): Promise<string[]> {
+    // Usamos el tenantName del token (que puede ser el suplantado)
     if (!user.tenantName || user.tenantName === 'coreDatabase') {
       return [];
     }
@@ -109,16 +101,33 @@ export class AuthService {
     const tenant = this.tenantService.findByName(user.tenantName);
     const tenantConnection = await this.connectionManager.getConnection(tenant);
 
-    const query = `
-      SELECT DISTINCT SUBSTRING(EM.PATHBD, CHARINDEX(':', EM.PATHBD) + 1, LEN(EM.PATHBD)) AS DB 
-      FROM USUARIOS U
-      INNER JOIN EMPRESASUSUARIO EMU ON EMU.CODUSUARIO = U.CODUSUARIO
-      INNER JOIN EMPRESAS EM ON EM.CODEMPRESA = EMU.CODEMPRESA
-      WHERE U.CODUSUARIO = @0`;
+    // --- LÓGICA DE QUERY MEJORADA ---
+    const userRoles = user.roles.map((role) => role.name);
+    const isAdmin =
+      userRoles.includes('Admin') || userRoles.includes('SuperAdmin');
 
-    const results: { DB: string }[] = await tenantConnection.query(query, [
-      user.externalId,
-    ]);
+    let query: string;
+    const params: any[] = [];
+
+    if (isAdmin && !user.externalId) {
+      query = `
+        SELECT DISTINCT SUBSTRING(EM.PATHBD, CHARINDEX(':', EM.PATHBD) + 1, LEN(EM.PATHBD)) AS DB 
+        FROM EMPRESAS EM
+        WHERE EM.PATHBD IS NOT NULL`;
+    } else {
+      query = `
+        SELECT DISTINCT SUBSTRING(EM.PATHBD, CHARINDEX(':', EM.PATHBD) + 1, LEN(EM.PATHBD)) AS DB 
+        FROM USUARIOS U
+        INNER JOIN EMPRESASUSUARIO EMU ON EMU.CODUSUARIO = U.CODUSUARIO
+        INNER JOIN EMPRESAS EM ON EM.CODEMPRESA = EMU.CODEMPRESA
+        WHERE U.CODUSUARIO = @0`;
+      params.push(user.externalId);
+    }
+
+    const results: { DB: string }[] = await tenantConnection.query(
+      query,
+      params,
+    );
 
     if (!results || results.length === 0) {
       return [];
@@ -126,8 +135,8 @@ export class AuthService {
     return results.map((result) => result.DB);
   }
 
-  async getMyCompanies(userId: number): Promise<string[]> {
-    const user = await this.usersService.findOne(userId);
+  async getMyCompanies(user: User): Promise<string[]> {
+    //const user = await this.usersService.findOne(userId);
 
     if (!user) {
       throw new UnauthorizedException('usuario no encontrado');
@@ -241,5 +250,49 @@ export class AuthService {
     await this.usersService.save(user);
 
     return { message: 'La contraseña ha sido restablecida exitosamente.' };
+  }
+
+  adminSwitchToContext(
+    coreUser: User,
+    tenantName: string,
+    dbName: string,
+  ): { accessToken: string } {
+    const tenant = this.tenantService.findByName(tenantName);
+
+    if (!tenant) {
+      throw new NotFoundException(
+        `Tenant con nombre "${tenantName}" no encontrado.`,
+      );
+    }
+
+    const payload = {
+      sub: coreUser.id,
+      name: coreUser.name,
+      tenant: tenantName,
+      dbName: dbName,
+      roles: coreUser.roles.map((role) => role.name),
+      jti: uuidv4(),
+    };
+
+    const accessToken = this.jwtService.sign(payload);
+    return { accessToken };
+  }
+
+  private _generateCoreToken(user: User): { accessToken: string } {
+    const payload = {
+      sub: user.id,
+      name: user.name,
+      tenant: 'coreDatabase',
+      dbName: null,
+      roles: user.roles.map((role) => role.name),
+      jti: uuidv4(),
+    };
+
+    const accessToken = this.jwtService.sign(payload);
+    return { accessToken };
+  }
+
+  exitAdminContext(coreUser: User): { accessToken: string } {
+    return this._generateCoreToken(coreUser);
   }
 }

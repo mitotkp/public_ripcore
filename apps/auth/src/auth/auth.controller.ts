@@ -22,6 +22,8 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { BlocklistService } from './blocklist.service';
 import { User } from '../users/user.entity';
+import { Roles } from './decorators/roles.decorator';
+import { RolesGuard } from './guards/roles.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -96,7 +98,7 @@ export class AuthController {
   @Get('my-companies')
   async getMyCompanies(@Req() req: Request) {
     const user = req.user as User;
-    return this.authService.getMyCompanies(user.id);
+    return this.authService.getMyCompanies(user);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -107,5 +109,25 @@ export class AuthController {
   ) {
     const user = req.user as User;
     return this.authService.switchCompany(user, selectCompanyDto.dbName);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('Admin', 'SuperAdmin') // Protegido solo para Admins
+  @Post('admin/switch-context')
+  adminSwitch(
+    @Req() req: Request,
+    @Body() switchDto: { tenantName: string; dbName: string },
+  ) {
+    const user = req.user as User;
+    const { tenantName, dbName } = switchDto;
+    return this.authService.adminSwitchToContext(user, tenantName, dbName);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('Admin', 'SuperAdmin', 'Soporte') // Cualquiera que pueda suplantar
+  @Post('admin/exit-context')
+  exitAdminContext(@Req() req: Request) {
+    const user = req.user as User;
+    return this.authService.exitAdminContext(user);
   }
 }
