@@ -1,4 +1,4 @@
-import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule, Global } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
@@ -10,6 +10,25 @@ import { configuration } from './config/configuration';
 import { EncryptionHelper } from './helpers/encryption.helper';
 import { DiagModule } from './modules/diag/diag.module';
 //import { ProfilesController } from './modules/profiles/profile.controller';
+import { ClientsModule, Transport } from '@nestjs/microservices';
+
+@Global()
+@Module({
+  imports: [
+    ClientsModule.register([
+      {
+        name: 'AUDIT_SERVICE',
+        transport: Transport.TCP,
+        options: {
+          host: 'localhost',
+          port: 7070,
+        },
+      },
+    ]),
+  ],
+  exports: [ClientsModule],
+})
+export class GlobalClientsModule {}
 
 @Module({
   imports: [
@@ -42,6 +61,7 @@ import { DiagModule } from './modules/diag/diag.module';
       },
     }),
     //Módulos del Core de la aplicación
+    GlobalClientsModule,
     ProfilesModule,
     DiagModule,
   ],
@@ -50,6 +70,7 @@ import { DiagModule } from './modules/diag/diag.module';
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
+    console.log(consumer);
     //consumer.apply(TenantMiddleware).forRoutes(ProfilesController);
   }
 }

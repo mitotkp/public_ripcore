@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Role } from './entities/role.entity';
@@ -12,6 +12,8 @@ import { UpdatePermissionDto } from './dto/update-permission.dto';
 //import { PaginationDto } from 'apps/ripcore/src/core/shared/dto/pagination.dto';
 import { PaginationDto } from '../shared/dto/pagination.dto';
 //import { PaginationDto } from '../shared/dto/pagination.dto';
+//import { AuditService } from '../audit/audit.service';
+import { ClientProxy } from '@nestjs/microservices';
 
 @Injectable()
 export class RbacService {
@@ -24,6 +26,10 @@ export class RbacService {
 
     @InjectRepository(Permission)
     private permissionsRepository: Repository<Permission>,
+
+    //private readonly auditService: AuditService,
+
+    @Inject('AUDIT_SERVICE') private auditClient: ClientProxy,
   ) {}
 
   //Busca todos los roles
@@ -80,6 +86,14 @@ export class RbacService {
     }
 
     user.roles.push(role);
+
+    this.auditClient.emit('log_audit', {
+      action: 'role_assigned',
+      targetEntity: 'roles',
+      targetId: `${userId.toString()} , ${roleId.toString()}`,
+      details: { rolesAndUser: role },
+    });
+
     return this.usersRepository.save(user);
   }
 
@@ -92,6 +106,14 @@ export class RbacService {
     if (!user) throw new NotFoundException('Usuario no encontrado');
 
     user.roles = user.roles.filter((role) => role.id !== roleId);
+
+    this.auditClient.emit('log_audit', {
+      action: 'role_remove',
+      targetEntity: 'roles',
+      targetId: `${userId.toString()} , ${roleId.toString()}`,
+      details: { rolesAndUser: user },
+    });
+
     return this.usersRepository.save(user);
   }
 
@@ -191,6 +213,14 @@ export class RbacService {
     }
 
     role.permissions.push(permission);
+
+    this.auditClient.emit('log_audit', {
+      action: 'permission_assigned_to_role',
+      targetEntity: 'roles, permission',
+      targetId: `${roleId.toString()} , ${permissionId.toString()}`,
+      details: { roleAndPermission: permission },
+    });
+
     return this.roleRepository.save(role);
   }
 
@@ -208,6 +238,14 @@ export class RbacService {
     role.permissions = role.permissions.filter(
       (perm) => perm.id !== permissionId,
     );
+
+    this.auditClient.emit('log_audit', {
+      action: 'permission_removed_from_role',
+      targetEntity: 'roles, permission',
+      targetId: `${roleId.toString()} , ${permissionId.toString()}`,
+      details: { roleAndPermission: role },
+    });
+
     return this.roleRepository.save(role);
   }
 }

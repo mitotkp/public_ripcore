@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { TenantService } from './tenant/tenant.service';
 import { TenantConnectionManager } from './tenant/tenant-connection.manager';
@@ -13,6 +13,8 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 import { v4 as uuidv4 } from 'uuid';
 import { User } from '../users/user.entity';
 import { NotFoundException } from '@nestjs/common';
+//import { AuditService } from '../audit/audit.service';
+import { ClientProxy } from '@nestjs/microservices';
 
 export interface ExternalDbUser {
   CODUSUARIO: string;
@@ -35,6 +37,8 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly encryptionHelper: EncryptionHelper,
     private readonly mailService: MailService,
+    //private readonly auditService: AuditService,
+    @Inject('AUDIT_SERVICE') private readonly auditClient: ClientProxy,
   ) {}
 
   async loginCore(
@@ -46,8 +50,22 @@ export class AuthService {
     const encryptedPassword = this.encryptionHelper.encriptar(password);
 
     if (!user || user.password !== encryptedPassword) {
+      this.auditClient.emit('log_audit', {
+        action: 'login_failure',
+        targetEntity: 'users',
+        targetId: user?.id.toString() || 'Sin usuario indentifcado',
+        details: { email: user?.email },
+      });
+
       throw new UnauthorizedException('Credenciales incorrectas');
     }
+
+    this.auditClient.emit('log_audit', {
+      action: 'login_success',
+      targetEntity: 'users',
+      targetId: user.id.toString(),
+      details: { email: user.email },
+    });
 
     return this._generateCoreToken(user);
   }
@@ -72,6 +90,13 @@ export class AuthService {
     ]);
 
     if (!results || results.length === 0) {
+      this.auditClient.emit('log_audit', {
+        action: 'tenant_login_failure',
+        targetEntity: 'users',
+        targetId: '',
+        details: { resultado: results },
+      });
+
       throw new UnauthorizedException('Invalid credentials');
     }
 
@@ -88,6 +113,13 @@ export class AuthService {
       { ...selectionPayload, type: 'company-selection' },
       { expiresIn: '10m' },
     );
+
+    this.auditClient.emit('log_audit', {
+      action: 'tenant_login_success',
+      targetEntity: 'users',
+      targetId: selectionPayload.codUsuario.toString(),
+      details: { usuario: selectionPayload.usuario },
+    });
 
     return { companies, selectionToken };
   }
@@ -132,6 +164,7 @@ export class AuthService {
     if (!results || results.length === 0) {
       return [];
     }
+
     return results.map((result) => result.DB);
   }
 
@@ -166,6 +199,14 @@ export class AuthService {
     };
 
     const accessToken = this.jwtService.sign(payload);
+
+    this.auditClient.emit('log_audit', {
+      action: 'switch_company',
+      targetEntity: 'users',
+      targetId: payload.sub.toString(),
+      details: { payload: payload },
+    });
+
     return { accessToken };
   }
 
@@ -223,6 +264,13 @@ export class AuthService {
 
     await this.mailService.sendPasswordResetEmail(user, token);
 
+    this.auditClient.emit('log_audit', {
+      action: 'forgot_password',
+      targetEntity: 'users',
+      targetId: user.id.toString(),
+      details: { usuario: user },
+    });
+
     return {
       message:
         'Si existe una cuenta con ese correo, se ha enviado un enlace para restablecer la contraseña.',
@@ -248,6 +296,13 @@ export class AuthService {
     user.password_reset_expires = null;
 
     await this.usersService.save(user);
+
+    this.auditClient.emit('log_audit', {
+      action: 'forgot_password',
+      targetEntity: 'users',
+      targetId: user.id.toString(),
+      details: { usuario: user },
+    });
 
     return { message: 'La contraseña ha sido restablecida exitosamente.' };
   }
@@ -275,6 +330,7 @@ export class AuthService {
     };
 
     const accessToken = this.jwtService.sign(payload);
+
     return { accessToken };
   }
 

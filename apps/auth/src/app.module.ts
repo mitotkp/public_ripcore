@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { configuration } from './auth/config/configuration';
@@ -11,6 +11,25 @@ import { EncryptionHelper } from './auth/helpers/encryption.helper';
 import { SettingsModule } from './settings/settings.module';
 //import { ModuleRegistryService } from './module-registry-service/module-registry-service.service';
 import { ModuleRegistryModule } from './module-registry-service/module-registry.module';
+import { ClientsModule, Transport } from '@nestjs/microservices';
+
+@Global()
+@Module({
+  imports: [
+    ClientsModule.register([
+      {
+        name: 'AUDIT_SERVICE',
+        transport: Transport.TCP,
+        options: {
+          host: 'localhost',
+          port: 7070,
+        },
+      },
+    ]),
+  ],
+  exports: [ClientsModule],
+})
+export class GlobalClientsModule {}
 
 @Module({
   imports: [
@@ -37,6 +56,7 @@ import { ModuleRegistryModule } from './module-registry-service/module-registry.
         };
       },
     }),
+    GlobalClientsModule,
     AuthModule,
     UsersModule,
     MailModule,

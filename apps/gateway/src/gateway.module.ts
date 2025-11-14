@@ -21,12 +21,24 @@ import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { CacheModule } from '@nestjs/cache-manager';
 import { ScheduleModule } from '@nestjs/schedule';
 import { DiscoveryService } from './discovery/discovery.service';
+import { ClientsModule, Transport } from '@nestjs/microservices';
 
 @Module({
   imports: [
     HttpModule.register({
       timeout: 300000,
     }),
+
+    ClientsModule.register([
+      {
+        name: 'AUDIT_SERVICE', // El mismo token
+        transport: Transport.TCP,
+        options: {
+          host: 'localhost',
+          port: 7070,
+        },
+      },
+    ]),
 
     ConfigModule.forRoot({
       isGlobal: true,

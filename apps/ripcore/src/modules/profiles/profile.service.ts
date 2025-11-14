@@ -1,9 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 //import { User } from 'src/core/users/user.entity';
 import { Profile } from './entities/profile.entity';
 //import { UsersService } from 'src/core/users/users.service';
+import { ClientProxy } from '@nestjs/microservices';
 
 @Injectable()
 export class ProfileService {
@@ -11,6 +12,7 @@ export class ProfileService {
     @InjectRepository(Profile)
     private profilesRepository: Repository<Profile>,
     //private usersService: UsersService,
+    @Inject('AUDIT_SERVICE') private readonly auditClient: ClientProxy,
   ) {}
 
   async findOneByUser(userId: number): Promise<Profile> {
@@ -46,6 +48,13 @@ export class ProfileService {
     delete updateProfileDto.userId;
 
     Object.assign(profile, updateProfileDto);
+
+    this.auditClient.emit('log_audit', {
+      action: 'update_profile_user',
+      targetEntity: 'profile',
+      targetId: `${userId.toString()}`,
+      details: { profile: profile },
+    });
 
     return this.profilesRepository.save(profile);
   }

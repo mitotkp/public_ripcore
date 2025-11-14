@@ -1,4 +1,5 @@
 import {
+  Inject,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -8,7 +9,8 @@ import { Repository, MoreThan } from 'typeorm';
 import { User } from './user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { AuditService } from '../audit/audit.service';
+//import { AuditService } from '../audit/audit.service';
+import { ClientProxy } from '@nestjs/microservices';
 import { Logger } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 //import { PaginationDto } from '../../../ripcore/src/core/shared/dto/pagination.dto';
@@ -31,7 +33,8 @@ export class UsersService {
   constructor(
     @InjectRepository(User, 'default')
     private usersRepository: Repository<User>,
-    private auditService: AuditService,
+    //private auditService: AuditService,
+    @Inject('AUDIT_SERVICE') private auditClient: ClientProxy,
     private readonly encryptionHelper: EncryptionHelper,
   ) {}
 
@@ -77,7 +80,7 @@ export class UsersService {
     Logger.log(newUser);
 
     // 3. REGISTRA LA ACCIÓN DE AUDITORÍA
-    await this.auditService.log({
+    this.auditClient.emit('log_audit', {
       action: 'user_created',
       targetEntity: 'users',
       targetId: newUser.id.toString(),
@@ -151,6 +154,14 @@ export class UsersService {
     if (!user) {
       throw new NotFoundException(`Usuario con ID "${id}" no encontrado.`);
     }
+
+    this.auditClient.emit('log_audit', {
+      action: 'user_updated',
+      targetEntity: 'users',
+      targetId: user.id.toString(),
+      details: { user: currentUser }, // Guarda detalles extra si quieres
+    });
+
     return this.usersRepository.save(user);
   }
 
@@ -160,6 +171,13 @@ export class UsersService {
     if (result.affected === 0) {
       throw new NotFoundException(`Usuario con ID "${id}" no encontrado.`);
     }
+
+    this.auditClient.emit('log_audit', {
+      action: 'user_deleted',
+      targetEntity: 'users',
+      targetId: id.toString(),
+      details: { user: result }, // Guarda detalles extra si quieres
+    });
   }
 
   /**

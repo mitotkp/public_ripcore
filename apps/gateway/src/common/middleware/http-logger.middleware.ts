@@ -1,5 +1,6 @@
-import { Injectable, NestMiddleware, Logger } from '@nestjs/common';
+import { Injectable, NestMiddleware, Logger, Inject } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
+import { ClientProxy } from '@nestjs/microservices';
 
 interface RequestWithMaybeUser extends Request {
   user?: {
@@ -12,6 +13,10 @@ interface RequestWithMaybeUser extends Request {
 @Injectable()
 export class HttpLoggerMiddleware implements NestMiddleware {
   private readonly logger = new Logger('HTTP');
+
+  constructor(
+    @Inject('AUDIT_SERVICE') private readonly auditClient: ClientProxy,
+  ) {}
 
   use(
     request: RequestWithMaybeUser,
@@ -40,6 +45,25 @@ export class HttpLoggerMiddleware implements NestMiddleware {
       const tenantId = request.user?.tenant
         ? ` Tenant:${request.user.tenant}`
         : '';
+      // const auditUserId = request.user?.sub ? request.user.sub : null;
+      // const auditTenant = request.user?.tenant || null;
+      // const auditDbName = (request.user as any)?.dbName || null;
+
+      // this.auditClient.emit('log_audit', {
+      //   userId: auditUserId,
+      //   action: `http_${method}`,
+      //   targetEntity: 'http_request',
+      //   targetId: originalUrl,
+      //   details: {
+      //     statusCode: statusCode,
+      //     durationMs: duration,
+      //     ip: ip,
+      //     userAgent: userAgent || '',
+      //     tenant: auditTenant,
+      //     dbName: auditDbName,
+      //     logLevel: logLevel,
+      //   },
+      // });
 
       this.logger[logLevel](
         `<-- ${method} ${originalUrl} ${statusCode} ${contentLength || '-'} - ${duration}ms ${userAgent} ${ip}${userId}${tenantId}`,

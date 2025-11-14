@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsInt, IsOptional, Min } from 'class-validator';
+import { IsInt, IsOptional, Min, IsString } from 'class-validator';
 
 export class PaginationDto {
   @IsOptional()
@@ -13,4 +13,12 @@ export class PaginationDto {
   @IsInt({ message: 'El límite debe ser un número entero.' })
   @Min(1, { message: 'El límite debe ser como mínimo 1.' })
   limit?: number = 50;
+
+  @IsOptional()
+  @IsString()
+  filterAction?: string;
+
+  @IsOptional()
+  @IsString()
+  filterUserId?: string;
 }

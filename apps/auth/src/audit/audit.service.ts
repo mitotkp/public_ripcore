@@ -1,8 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+//import { Repository } from 'typeorm';
 import { Audit } from './entities/audit.entity';
 import { PaginationDto } from '../shared/dto/pagination.dto';
+import { Repository, Like, FindOptionsWhere } from 'typeorm';
 //import { PaginationDto } from '../shared/dto/pagination.dto';
 
 // Interfaz para definir la estructura de un log
@@ -38,16 +39,29 @@ export class AuditService {
   }
 
   async findAll(paginationDto: PaginationDto) {
-    const { page = 1, limit = 50 } = paginationDto;
+    // --- LÓGICA DE FILTRO MEJORADA ---
+    const { page = 1, limit = 50, filterAction, filterUserId } = paginationDto;
     const skip = (page - 1) * limit;
 
+    // 1. Construye la consulta 'where' dinámicamente
+    const where: FindOptionsWhere<Audit> = {};
+    if (filterAction) {
+      where.action = Like(`%${filterAction}%`); // Busca acciones que contengan el texto
+    }
+    if (filterUserId) {
+      where.userId = filterUserId; // Busca por ID de usuario exacto
+    }
+
+    // 2. Aplica 'where' a la consulta
     const [logs, total] = await this.auditLogRepository.findAndCount({
+      where, // <-- Aplica los filtros
       take: limit,
       skip: skip,
       order: {
-        createdAt: 'DESC', // Ordenamos los logs del más reciente al más antiguo
+        createdAt: 'DESC',
       },
     });
+    // --- FIN DE LA LÓGICA MEJORADA ---
 
     return {
       data: logs,

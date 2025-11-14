@@ -35,7 +35,11 @@ export class SettingsController {
   }
 
   @Patch(':key')
-  update(@Param('key') key: string, @Body('value') value: string) {
+  update(
+    @Param('key') key: string,
+    @Body('value')
+    value: string,
+  ) {
     return this.settingsService.update(key, value);
   }
 }
