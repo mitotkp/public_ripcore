@@ -31,7 +31,7 @@ export class DiagController {
   ping() {
     return {
       status: 'ok',
-      message: 'Servicio RipCore está respondiendo.',
+      message: 'Servicio RipCore está respondiendo. Puedes continuar con tu trabajo...',
       timestamp: new Date().toISOString(),
     };
   }
