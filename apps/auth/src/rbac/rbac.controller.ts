@@ -18,10 +18,7 @@ import { UpdatePermissionDto } from './dto/update-permission.dto';
 import { CreatePermissionDto } from './dto/create-permission.dto';
 import { AssignPermissionDto } from './dto/assign-permission.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { PaginationDto } from '../shared/dto/pagination.dto';
-//import { PaginationDto } from '../shared/dto/pagination.dto';
-//import { PaginationDto } from 'apps/ripcore/src/core/shared/dto/pagination.dto';
-//import { PaginationDto } from '../shared/dto/pagination.dto';
+import { PaginationDto } from '@app/common';
 
 @Controller('rbac')
 @UseGuards(JwtAuthGuard)

@@ -3,7 +3,7 @@
   "compilerOptions": {
     // Asegúrate que la ruta de salida sea correcta para 'auth'
     "outDir": "../../dist/apps/auth",
-    "baseUrl": "./"
+    "baseUrl": "../../"
     // Mantén paths comentado por ahora
   },
   "include": ["src/**/*"], // Solo compila lo que está en src de auth

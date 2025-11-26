@@ -53,4 +53,50 @@ export class ModuleRegistryService {
       throw new NotFoundException(`Módulo con ID "${id}" no encontrado.`);
     }
   }
+
+  // --- Métodos para Registro Dinámico ---
+
+  /**
+   * Registra o actualiza un módulo externo.
+   * Si ya existe (por nombre o prefijo), lo actualiza y lo marca como habilitado.
+   */
+  async register(createModuleDto: CreateModuleDto): Promise<RegistredModule> {
+    // Buscar por nombre O prefijo para evitar duplicados
+    const existingModule = await this.moduleRepository.findOne({
+      where: [
+        { name: createModuleDto.name },
+        { prefix: createModuleDto.prefix },
+      ],
+    });
+
+    if (existingModule) {
+      // Actualizar existente
+      const updated = await this.moduleRepository.preload({
+        id: existingModule.id,
+        ...createModuleDto,
+        isEnabled: 1, // Asegurar que esté habilitado al registrarse
+      });
+      return this.moduleRepository.save(updated!);
+    } else {
+      // Crear nuevo
+      const newModule = this.moduleRepository.create({
+        ...createModuleDto,
+        isEnabled: 1,
+      });
+      return this.moduleRepository.save(newModule);
+    }
+  }
+
+  /**
+   * Desregistra un módulo (lo marca como deshabilitado).
+   * No lo borramos para mantener historial, pero el Gateway dejará de enrutarlo.
+   */
+  async unregister(name: string): Promise<void> {
+    const module = await this.moduleRepository.findOneBy({ name });
+    if (module) {
+      module.isEnabled = 0;
+      await this.moduleRepository.save(module);
+    }
+    // Si no existe, no hacemos nada (idempotente)
+  }
 }

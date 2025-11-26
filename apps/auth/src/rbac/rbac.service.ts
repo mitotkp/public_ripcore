@@ -9,10 +9,7 @@ import { CreateRoleDto } from './dto/create-role.dto';
 import { CreatePermissionDto } from './dto/create-permission.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { UpdatePermissionDto } from './dto/update-permission.dto';
-//import { PaginationDto } from 'apps/ripcore/src/core/shared/dto/pagination.dto';
-import { PaginationDto } from '../shared/dto/pagination.dto';
-//import { PaginationDto } from '../shared/dto/pagination.dto';
-//import { AuditService } from '../audit/audit.service';
+import { PaginationDto } from '@app/common';
 import { ClientProxy } from '@nestjs/microservices';
 
 @Injectable()

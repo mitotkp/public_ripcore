@@ -2,7 +2,8 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "outDir": "../../dist/apps/ripcore"
+    "outDir": "../../dist/apps/ripcore",
+    "baseUrl": "../../"
   },
   "include": ["src/**/*"], // Solo incluye src por ahora
   "exclude": ["node_modules", "dist", "test"] // Excluye test temporalmente

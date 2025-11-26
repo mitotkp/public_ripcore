@@ -20,9 +20,7 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 //import { Roles } from './auth/decorators/roles.decorator';
 import { Permissions } from '../auth/decorators/permissions.decorator';
 import { PermissionsGuard } from '../auth/guards/permissions.guard';
-import { Public } from '../auth/decorators/public.decorator';
-//import { PaginationDto } from '../../../ripcore/src/core/shared/dto/pagination.dto';
-import { PaginationDto } from '../shared/dto/pagination.dto';
+import { Public, PaginationDto } from '@app/common';
 
 // interface RequestWithUser extends ExpressRequest {
 //   user: {

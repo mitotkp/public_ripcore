@@ -13,7 +13,7 @@ import { Request } from 'express';
 import { AuthService, SelectionTokenPayload } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { SelectCompanyDto } from './dto/select-company.dto';
-import { Public } from './decorators/public.decorator';
+import { Public } from '../../../../libs/common/src/decorators/public.decorator';
 import { CreateUserDto } from '../users/dto/create-user.dto';
 import { UsersService } from '../users/users.service';
 import { LoginCoreDto } from './dto/login-core.dto';
@@ -24,7 +24,8 @@ import { BlocklistService } from './blocklist.service';
 import { User } from '../users/user.entity';
 import { Roles } from './decorators/roles.decorator';
 import { RolesGuard } from './guards/roles.guard';
-
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+@ApiTags('Autenticación')
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -67,6 +68,9 @@ export class AuthController {
   }
 
   @Post('login')
+  @ApiOperation({ summary: 'Iniciar sesión en un Tenant' })
+  @ApiResponse({ status: 200, description: 'Login exitoso, devuelve token temporal.' })
+  @ApiResponse({ status: 401, description: 'Credenciales inválidas.' })
   async login(@Body() loginDto: LoginDto) {
     return this.authService.login(loginDto);
   }

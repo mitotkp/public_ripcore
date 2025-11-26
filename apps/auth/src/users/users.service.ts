@@ -13,8 +13,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { ClientProxy } from '@nestjs/microservices';
 import { Logger } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-//import { PaginationDto } from '../../../ripcore/src/core/shared/dto/pagination.dto';
-import { PaginationDto } from '../shared/dto/pagination.dto';
+import { PaginationDto } from '@app/common';
 import { EncryptionHelper } from '../auth/helpers/encryption.helper';
 
 // interface UserPayload {

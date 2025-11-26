@@ -65,4 +65,18 @@ export class ModuleRegistryController {
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.moduleRegistryService.remove(id);
   }
+
+  // --- Endpoints para Microservicios (Registro Dinámico) ---
+
+  @Post('register')
+  // @Public() // TODO: Proteger con API Key en el futuro
+  registerModule(@Body() createModuleDto: CreateModuleDto) {
+    return this.moduleRegistryService.register(createModuleDto);
+  }
+
+  @Post('unregister')
+  // @Public()
+  unregisterModule(@Body('name') name: string) {
+    return this.moduleRegistryService.unregister(name);
+  }
 }

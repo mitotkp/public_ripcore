@@ -13,13 +13,9 @@ import { HttpService } from '@nestjs/axios';
 import { Request } from 'express';
 import { firstValueFrom } from 'rxjs';
 import { AxiosError, RawAxiosRequestHeaders } from 'axios';
-//import { JwtService } from '@nestjs/jwt';
 import { Roles } from './roles.decorator';
-//import { RolesGuard } from './roles.guard';
 import { ConfigService } from '@nestjs/config';
-import { Public } from './auth/decorators/public.decorator';
-//import { resolve } from 'path';
-//import { basename } from 'path/win32';
+import { Public } from '@app/common';
 
 interface RequestWithUser extends Request {
   user: {

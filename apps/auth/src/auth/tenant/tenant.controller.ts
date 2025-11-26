@@ -20,7 +20,7 @@ import { Roles } from '../decorators/roles.decorator';
 //import { brotliDecompress } from 'zlib';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
 import { VerifyTenantDto } from './dto/verfiy-tenant.dto';
-import { Public } from '../decorators/public.decorator';
+import { Public } from '../../../../../libs/common/src/decorators/public.decorator';
 
 @Controller('tenants')
 @UseGuards(JwtAuthGuard, RolesGuard)

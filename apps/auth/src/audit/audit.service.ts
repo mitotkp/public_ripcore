@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 //import { Repository } from 'typeorm';
 import { Audit } from './entities/audit.entity';
-import { PaginationDto } from '../shared/dto/pagination.dto';
+import { PaginationDto } from '@app/common';
 import { Repository, Like, FindOptionsWhere } from 'typeorm';
 //import { PaginationDto } from '../shared/dto/pagination.dto';
 

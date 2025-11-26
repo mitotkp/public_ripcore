@@ -3,21 +3,16 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { GatewayController } from './gateway.controller';
 import { GatewayService } from './gateway.service';
-//import { createProxyMiddleware } from 'http-proxy-middleware';
-
 import { AuthGatewayController } from './auth.controller';
 import { RipcoreGatewayController } from './ripcore.controller';
 import { HttpModule } from '@nestjs/axios';
 import { configuration } from './config/configuration';
-//import { config } from 'process';
-
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { RolesGuard } from './roles.guard';
-import { HttpLoggerMiddleware } from './common/middleware/http-logger.middleware';
 import { APP_GUARD, APP_FILTER, HttpAdapterHost } from '@nestjs/core';
-import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import { HttpLoggerMiddleware } from '@app/common';
+import { HttpExceptionFilter } from '@app/common';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
-
 import { CacheModule } from '@nestjs/cache-manager';
 import { ScheduleModule } from '@nestjs/schedule';
 import { DiscoveryService } from './discovery/discovery.service';
