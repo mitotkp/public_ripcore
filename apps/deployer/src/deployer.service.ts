@@ -1,14 +1,16 @@
 import { Injectable, OnModuleInit, Logger, InternalServerErrorException } from '@nestjs/common';
 import * as Docker from 'dockerode';
 import { DeployModuleDto } from './dto/deploy-module.dto';
-import { resolve } from 'path';
-
+import { HttpService } from '@nestjs/axios';
+import { firstValueFrom } from 'rxjs';
+import { version } from 'os';
 @Injectable()
 export class DeployerService implements OnModuleInit {
   private docker: Docker;
   private readonly logger = new Logger(DeployerService.name);
+  private readonly authServiceUrl = 'http://localhost:3001';
 
-  constructor() {
+  constructor(private readonly httpService: HttpService) {
     //const isWindows = process.platform === 'win32';
     const dockerOptions = { host: 'localhost', port: 2375 }
     
@@ -60,6 +62,12 @@ export class DeployerService implements OnModuleInit {
       const data = await container.inspect();
       const hostPort = data?.NetworkSettings?.Ports?.[portBingingKey]?.[0]?.HostPort;
       
+      if(!hostPort){
+        throw new Error('No se pudo obtener el puerto del contenedor');
+      }
+
+      const internalUrl = `http://localhost:${hostPort}`;
+
       const deployResult = {
         status: 'running',
         containerId: container.id,
@@ -69,6 +77,15 @@ export class DeployerService implements OnModuleInit {
       };
 
       this.logger.log(`Container ${deployModuleDto.moduleName} deployed successfully`);
+
+      await this.reisterModuleInAuthService({
+        name: deployModuleDto.moduleName,
+        prefix: deployModuleDto.moduleName,
+        baseUrl: internalUrl,
+        isEnabled: 1,
+        version: '1.0.0',
+      });
+
       return deployResult;
     
     } catch (error) {
@@ -76,7 +93,27 @@ export class DeployerService implements OnModuleInit {
       throw new InternalServerErrorException(error.message);
     }
   }
+  
+  private async reisterModuleInAuthService(moduleData: any): Promise<void> {
+    this.logger.log(`Registrando módulo ${moduleData.name} en AuthService`);
+    try {
+      const response = await firstValueFrom(
+        this.httpService.post(`${this.authServiceUrl}/modules`, moduleData)
+      );
+      this.logger.log(`Módulo ${moduleData.name} registrado en AuthService`);
+    } catch (error) {
+      this.logger.error(`Error al registrar módulo ${moduleData.name} en AuthService: ${error.message}`);
+    }
 
+    try {
+      const response = await firstValueFrom(
+        this.httpService.post(`${this.authServiceUrl}/modules`, moduleData)
+      );
+      this.logger.log(`Módulo ${moduleData.name} registrado en AuthService`);
+    } catch (error) {
+      this.logger.error(`Error al registrar módulo ${moduleData.name} en AuthService: ${error.message}`);
+    }
+  }
   private async pullImage(image: string): Promise<void> {
     this.logger.debug(`Descargando imagne ${image}...`);
     
@@ -89,18 +126,12 @@ export class DeployerService implements OnModuleInit {
         }
 
         if (!stream) {
-            const error = new Error(`Docker no devolvió un stream para ${image}. ¿La imagen existe y es pública?`);
-            this.logger.error(error.message);
-            return reject(error);
+          const error = new Error(`Docker no devolvió un stream para ${image}. ¿La imagen existe y es pública?`);
+          this.logger.error(error.message);
+          return reject(error);
         }
 
-        try {
-            this.docker.modem.followProgress(stream, onFinished, onProgress);
-        } catch (e) {
-            reject(new Error(`Error al procesar el stream de Docker: ${e.message}`));
-        }
-
-        function onFinished(err: any) {
+        const onFinished = (err: any) => {
           if (err) {
             reject(err);
           } else {
@@ -108,13 +139,18 @@ export class DeployerService implements OnModuleInit {
           }
         }
 
-        function onProgress(event: any) {
-          this.logger.log(event.status);
+        const onProgress = (event: any) => {
+          if (event.status) {
+            this.logger.debug(event.status); 
+          }
+        }
+
+        try {
+            this.docker.modem.followProgress(stream, onFinished, onProgress);
+        } catch (e) {
+            reject(new Error(`Error al procesar el stream de Docker: ${e.message}`));
         }
       })
     })
-
-    
-    this.logger.log(`Image ${image} pulled successfully`);
   }
 }
