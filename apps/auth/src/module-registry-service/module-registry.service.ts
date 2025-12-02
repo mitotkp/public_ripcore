@@ -71,20 +71,16 @@ export class ModuleRegistryService {
 
     if (existingModule) {
       // Actualizar existente
-      const updated = await this.moduleRepository.preload({
-        id: existingModule.id,
-        ...createModuleDto,
-        isEnabled: 1, // Asegurar que esté habilitado al registrarse
-      });
-      return this.moduleRepository.save(updated!);
-    } else {
-      // Crear nuevo
-      const newModule = this.moduleRepository.create({
-        ...createModuleDto,
-        isEnabled: 1,
-      });
-      return this.moduleRepository.save(newModule);
-    }
+      Object.assign(existingModule, createModuleDto);
+      existingModule.isEnabled = 1;
+      return this.moduleRepository.save(existingModule);
+    } 
+
+    const newModule = this.moduleRepository.create({
+      ...createModuleDto,
+      isEnabled: 1,
+    });
+    return this.moduleRepository.save(newModule);
   }
 
   /**

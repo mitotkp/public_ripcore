@@ -8,7 +8,7 @@ import { version } from 'os';
 export class DeployerService implements OnModuleInit {
   private docker: Docker;
   private readonly logger = new Logger(DeployerService.name);
-  private readonly authServiceUrl = 'http://localhost:3001';
+  private readonly authServiceUrl = 'http://localhost:3001/api';
 
   constructor(private readonly httpService: HttpService) {
     //const isWindows = process.platform === 'win32';
