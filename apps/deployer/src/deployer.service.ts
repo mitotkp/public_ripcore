@@ -8,12 +8,12 @@ import { version } from 'os';
 export class DeployerService implements OnModuleInit {
   private docker: Docker;
   private readonly logger = new Logger(DeployerService.name);
+  
   private readonly authServiceUrl = 'http://localhost:3001/api';
 
   constructor(private readonly httpService: HttpService) {
     //const isWindows = process.platform === 'win32';
     const dockerOptions = { host: 'localhost', port: 2375 }
-    
     this.docker = new Docker(dockerOptions);
   }
 
@@ -38,6 +38,8 @@ export class DeployerService implements OnModuleInit {
     const containerPort = deployModuleDto.containerPort || 4000;
     const portBingingKey = `${containerPort}/tcp`;
     
+    let containerId: string | null = null;
+    
     try {
       await this.pullImage(deployModuleDto.image);
       
@@ -57,6 +59,8 @@ export class DeployerService implements OnModuleInit {
         },
       });
 
+      containerId = container.id;
+
       await container.start();
 
       const data = await container.inspect();
@@ -67,16 +71,9 @@ export class DeployerService implements OnModuleInit {
       }
 
       const internalUrl = `http://localhost:${hostPort}`;
+      this.logger.log(`Contenedor iniciado en: ${internalUrl}. Esperando comprobación...  `);
 
-      const deployResult = {
-        status: 'running',
-        containerId: container.id,
-        name: deployModuleDto.moduleName,
-        internalUrl: `http://localhost:${hostPort}`,
-        port: hostPort
-      };
-
-      this.logger.log(`Container ${deployModuleDto.moduleName} deployed successfully`);
+      await this.waitForHealth(internalUrl); 
 
       await this.reisterModuleInAuthService({
         name: deployModuleDto.moduleName,
@@ -85,15 +82,51 @@ export class DeployerService implements OnModuleInit {
         isEnabled: 1,
         version: '1.0.0',
       });
+      
+      const deployResult = {
+        status: 'running',
+        containerId: container.id,
+        name: deployModuleDto.moduleName,
+        internalUrl: `http://localhost:${hostPort}`,
+        port: hostPort
+      };
 
+      this.logger.log(`Contenedor desplegado en ${deployModuleDto.moduleName}  y verificado correctamente`);
       return deployResult;
     
     } catch (error) {
       this.logger.error(`Error al desplegar el módulo ${deployModuleDto.moduleName}: ${error.message}`);
+      
+      if(containerId) {
+        this.logger.warn(`Eliminando contenedor fallido (${containerId})....`);
+        try{
+          const container = this.docker.getContainer(containerId);
+          await container.remove({force: true});
+        } catch (error){
+          this.logger.error(`Error al eliminar contenedor fallido (${containerId}): ${error.message}`);
+        }
+      }
       throw new InternalServerErrorException(error.message);
     }
   }
   
+  private async waitForHealth(url: string, maxRetries = 15): Promise<void> {
+    
+    for(let i = 1; i <= maxRetries; i++){
+      try {
+        await firstValueFrom(this.httpService.get(`${url}/`, { timeout: 2000 }));
+        this.logger.log(`Check OK en intento ${i} de ${maxRetries}`);
+        return;
+      } catch (error) {
+        this.logger.log(`Check fallido en intento ${i} de ${maxRetries}`);
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+    }
+
+    //this.logger.log(`Contenedor no listo en ${url}. Intento ${maxRetries} de ${maxRetries}`);
+    throw new Error(`El contenedor no respondió al check después de varias intentos`);
+  }
+
   private async reisterModuleInAuthService(moduleData: any): Promise<void> {
     this.logger.log(`Registrando módulo ${moduleData.name} en AuthService`);
     try {
@@ -104,18 +137,10 @@ export class DeployerService implements OnModuleInit {
     } catch (error) {
       this.logger.error(`Error al registrar módulo ${moduleData.name} en AuthService: ${error.message}`);
     }
-
-    try {
-      const response = await firstValueFrom(
-        this.httpService.post(`${this.authServiceUrl}/modules`, moduleData)
-      );
-      this.logger.log(`Módulo ${moduleData.name} registrado en AuthService`);
-    } catch (error) {
-      this.logger.error(`Error al registrar módulo ${moduleData.name} en AuthService: ${error.message}`);
-    }
   }
+
   private async pullImage(image: string): Promise<void> {
-    this.logger.debug(`Descargando imagne ${image}...`);
+    this.logger.debug(`Descargando imagen ${image}...`);
     
     return new Promise((resolve, reject) => {
       this.docker.pull(image, {}, (err, stream) => {

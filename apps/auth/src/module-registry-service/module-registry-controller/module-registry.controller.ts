@@ -25,7 +25,7 @@ export class ModuleRegistryController {
   //@UseGuards(JwtAuthGuard, RolesGuard)
   //@Roles('SuperAdmin', 'Admin')
   create(@Body() createModuleDto: CreateModuleDto) {
-    return this.moduleRegistryService.create(createModuleDto);
+    return this.moduleRegistryService.register(createModuleDto);
   }
 
   @Get()
